@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">TodoList</string>
+    <string name="name">Name</string>
+    <string name="search">search</string>
+    <string name="todo">TODO</string>
+    <string name="button">Button</string>
+    <string name="new_word">New Word</string>
+    <string name="completed_word">Completed Word</string>
+    <string name="addnew">AddNew</string>
+</resources>
