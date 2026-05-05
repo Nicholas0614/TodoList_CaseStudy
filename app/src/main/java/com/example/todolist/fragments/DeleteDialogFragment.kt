@@ -61,6 +61,7 @@ class DeleteDialogFragment : DialogFragment() {
 
             dismiss()
 
+
             parentFragmentManager.findFragmentByTag("todo_details")?.let {
                 (it as DialogFragment).dismiss() // 🔥 close details dialog too
             }

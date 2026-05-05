@@ -10,7 +10,7 @@ import androidx.lifecycle.viewModelScope
 class TodoViewModel(application: Application) : AndroidViewModel(application) {
 
     // 👇 KEEP your existing logic
-    val selectedTodo = MutableLiveData<TodoDetails>()
+    val selectedTodo = MutableLiveData<TodoDetails?>()
 
     // 👇 ADD Room
     private val dao = TodoDatabase.getDatabase(application).todoDao()
