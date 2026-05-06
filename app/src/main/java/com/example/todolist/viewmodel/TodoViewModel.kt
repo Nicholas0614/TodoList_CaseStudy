@@ -34,7 +34,7 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
             val updated = dao.getTodoById(id)
 
             // 🔥 force update even if same object
-            selectedTodo.postValue(null)
+            selectedTodo.postValue(updated.copy())
             selectedTodo.postValue(updated)
         }
     }
