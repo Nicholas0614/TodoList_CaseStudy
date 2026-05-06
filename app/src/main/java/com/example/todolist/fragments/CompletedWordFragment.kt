@@ -17,19 +17,21 @@ class CompletedWordFragment : Fragment(R.layout.completed_word_fragment) {
 
     private lateinit var viewModel: TodoViewModel
 
+    // ✅ SORT STATE (ADDED)
+    private var sortBy = "TITLE"   // TITLE or DATE
+    private var sortOrder = "ASC"  // ASC or DESC
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.recycleView)
         val emptyView = view.findViewById<View>(R.id.emptyView)
         val sortButton = view.findViewById<ImageButton>(R.id.imageView)
-        val addButton = view.findViewById<View>(R.id.button)
 
         viewModel = ViewModelProvider(requireActivity())[TodoViewModel::class.java]
 
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
 
-        // ✅ Adapter
         val adapter = TodoRecycleViewAdapter { todo ->
 
             viewModel.selectedTodo.value = todo
@@ -42,10 +44,8 @@ class CompletedWordFragment : Fragment(R.layout.completed_word_fragment) {
 
         recyclerView.adapter = adapter
 
-        // ✅ base list (from Room)
         var baseList = listOf<TodoDetails>()
 
-        // ✅ Empty state helper
         fun updateEmptyState(list: List<TodoDetails>) {
             if (list.isEmpty()) {
                 emptyView.visibility = View.VISIBLE
@@ -56,13 +56,30 @@ class CompletedWordFragment : Fragment(R.layout.completed_word_fragment) {
             }
         }
 
-        // 🔥 ROOM OBSERVER (replaces mock data)
+        // ✅ APPLY SORT (ADDED)
+        fun applySort(list: List<TodoDetails>): List<TodoDetails> {
+            var sortedList = when (sortBy) {
+                "TITLE" -> list.sortedBy { it.title }
+                "DATE" -> list.sortedBy { it.date }
+                else -> list
+            }
+
+            if (sortOrder == "DESC") {
+                sortedList = sortedList.reversed()
+            }
+
+            return sortedList
+        }
+
+        // 🔥 ROOM OBSERVER
         viewModel.allTodos.observe(viewLifecycleOwner) { data ->
 
             baseList = data.filter { it.status.name == "DONE" }
 
-            adapter.submitList(baseList)
-            updateEmptyState(baseList)
+            val sortedList = applySort(baseList)
+
+            adapter.submitList(sortedList)
+            updateEmptyState(sortedList)
         }
 
         // 📊 SORT
@@ -83,28 +100,30 @@ class CompletedWordFragment : Fragment(R.layout.completed_word_fragment) {
             val radioDate = dialogView.findViewById<android.widget.RadioButton>(R.id.radioDate)
             val btnDone = dialogView.findViewById<View>(R.id.btnDone)
 
+            // ✅ RESTORE SELECTION
+            radioTitle.isChecked = sortBy == "TITLE"
+            radioDate.isChecked = sortBy == "DATE"
+            radioAsc.isChecked = sortOrder == "ASC"
+            radioDesc.isChecked = sortOrder == "DESC"
+
             btnDone.setOnClickListener {
 
-                var sortedList = when {
-                    radioTitle.isChecked -> baseList.sortedBy { it.title }
-                    radioDate.isChecked -> baseList.sortedBy { it.date }
-                    else -> baseList
+                // ✅ SAVE SELECTION
+                sortBy = when {
+                    radioTitle.isChecked -> "TITLE"
+                    radioDate.isChecked -> "DATE"
+                    else -> sortBy
                 }
 
-                if (radioDesc.isChecked) {
-                    sortedList = sortedList.reversed()
-                }
+                sortOrder = if (radioDesc.isChecked) "DESC" else "ASC"
+
+                val sortedList = applySort(baseList)
 
                 adapter.submitList(sortedList)
                 updateEmptyState(sortedList)
 
                 dialog.dismiss()
             }
-        }
-
-        // ➕ ADD TODO
-        addButton.setOnClickListener {
-            AddTodoDialogFragment().show(parentFragmentManager, "add_todo")
         }
     }
 }

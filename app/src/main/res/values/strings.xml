@@ -7,4 +7,8 @@
     <string name="new_word">New Word</string>
     <string name="completed_word">Completed Word</string>
     <string name="addnew">AddNew</string>
+    <string name="nothing_here_yet">Nothing here yet</string>
+    <string name="todooo">TODO</string>
+    <string name="deidjei">TODO</string>
+    <string name="image">image</string>
 </resources>

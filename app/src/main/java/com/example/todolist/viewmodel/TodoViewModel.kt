@@ -35,7 +35,6 @@ class TodoViewModel(application: Application) : AndroidViewModel(application) {
 
             // 🔥 force update even if same object
             selectedTodo.postValue(updated.copy())
-            selectedTodo.postValue(updated)
         }
     }
 }

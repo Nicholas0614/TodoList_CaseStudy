@@ -20,6 +20,10 @@ class NewTodoFragment : Fragment(R.layout.new_todo_fragment) {
 
     private lateinit var viewModel: TodoViewModel
 
+    // ✅ SORT STATE (ADDED)
+    private var sortBy = "TITLE"   // TITLE or DATE
+    private var sortOrder = "ASC"  // ASC or DESC
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -33,9 +37,7 @@ class NewTodoFragment : Fragment(R.layout.new_todo_fragment) {
 
         recyclerView.layoutManager = LinearLayoutManager(view.context)
 
-        // ✅ Adapter (kept same logic)
         val adapter = TodoRecycleViewAdapter { todo ->
-
             viewModel.selectedTodo.value = todo
 
             TodoDetailsFragment().show(
@@ -46,10 +48,8 @@ class NewTodoFragment : Fragment(R.layout.new_todo_fragment) {
 
         recyclerView.adapter = adapter
 
-        // ✅ base list (updated from Room)
         var baseList = listOf<TodoDetails>()
 
-        // ✅ Empty state
         fun updateEmptyState(list: List<TodoDetails>) {
             if (list.isEmpty()) {
                 emptyView.visibility = View.VISIBLE
@@ -60,13 +60,30 @@ class NewTodoFragment : Fragment(R.layout.new_todo_fragment) {
             }
         }
 
-        // 🔥 ROOM DATA OBSERVER (REPLACES MOCK DATA)
+        // ✅ APPLY SORT FUNCTION (ADDED)
+        fun applySort(list: List<TodoDetails>): List<TodoDetails> {
+            var sortedList = when (sortBy) {
+                "TITLE" -> list.sortedBy { it.title }
+                "DATE" -> list.sortedBy { it.date }
+                else -> list
+            }
+
+            if (sortOrder == "DESC") {
+                sortedList = sortedList.reversed()
+            }
+
+            return sortedList
+        }
+
+        // 🔥 ROOM DATA OBSERVER
         viewModel.allTodos.observe(viewLifecycleOwner) { data ->
 
             baseList = data.filter { it.status.name == "NEW" }
 
-            adapter.submitList(baseList)
-            updateEmptyState(baseList)
+            val sortedList = applySort(baseList)
+
+            adapter.submitList(sortedList)
+            updateEmptyState(sortedList)
         }
 
         // 🔍 SEARCH
@@ -87,8 +104,10 @@ class NewTodoFragment : Fragment(R.layout.new_todo_fragment) {
                     }
                 }
 
-                adapter.submitList(filteredList)
-                updateEmptyState(filteredList)
+                val finalList = applySort(filteredList)
+
+                adapter.submitList(finalList)
+                updateEmptyState(finalList)
             }
 
             override fun afterTextChanged(s: Editable?) {}
@@ -112,24 +131,28 @@ class NewTodoFragment : Fragment(R.layout.new_todo_fragment) {
             val radioDate = dialogView.findViewById<android.widget.RadioButton>(R.id.radioDate)
             val btnDone = dialogView.findViewById<View>(R.id.btnDone)
 
+            // ✅ RESTORE PREVIOUS SELECTION (ADDED)
+            radioTitle.isChecked = sortBy == "TITLE"
+            radioDate.isChecked = sortBy == "DATE"
+            radioAsc.isChecked = sortOrder == "ASC"
+            radioDesc.isChecked = sortOrder == "DESC"
+
             btnDone.setOnClickListener {
 
-                var sortedList = when {
-                    radioTitle.isChecked -> baseList.sortedBy { it.title }
-                    radioDate.isChecked -> baseList.sortedBy { it.date }
-                    else -> baseList
-                }
+                // ✅ SAVE SELECTION (ADDED)
+                sortBy = if (radioTitle.isChecked) "TITLE" else "DATE"
+                sortOrder = if (radioDesc.isChecked) "DESC" else "ASC"
 
-                if (radioDesc.isChecked) {
-                    sortedList = sortedList.reversed()
-                }
+                val sortedList = applySort(baseList)
 
                 adapter.submitList(sortedList)
+                updateEmptyState(sortedList)
+
                 dialog.dismiss()
             }
         }
 
-        // ➕ ADD TODO (still not wired to Room yet)
+        // ➕ ADD TODO
         addButton.setOnClickListener {
             AddTodoDialogFragment().show(parentFragmentManager, "add_todo")
         }
